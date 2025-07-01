@@ -5,30 +5,32 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
     const password = document.getElementById('password').value;
 
     try {
-        const response = await fetch('https://your-railway-backend-url.com/api/login', {
+        const response = await fetch('https://your-railway-app.up.railway.app/api/login', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ email: username, password: password })
+            body: JSON.stringify({
+                email: username,
+                password: password
+            })
         });
 
         const data = await response.json();
 
         if (response.ok) {
-            // Login successful - store token if using JWT
-            localStorage.setItem('token', data.token);  // Optional: only if using JWT
+            localStorage.setItem('token', data.token);
             alert('Login successful!');
-            window.location.href = '/dashboard.html';  // or wherever you want to redirect
+            window.location.href = '/dashboard.html'; // Or any page after login
         } else {
-            alert('Login failed: ' + (data.message || 'Invalid credentials'));
+            alert(data.message || 'Invalid login credentials.');
         }
-
     } catch (error) {
-        console.error('Error during login:', error);
-        alert('An error occurred. Please try again later.');
+        console.error('Login error:', error);
+        alert('Login failed. Please try again later.');
     }
 });
+
 
 
 
