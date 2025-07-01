@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Admin Dashboard - User & Team Management</h1>
+
+    <!-- First Row: User Management -->
+    <div class="row mb-5">
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-header"><h3>Create New User</h3></div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('main.admin_create_user') }}">
+                        <div class="form-group mb-2"><label for="full_name">Full Name</label><input type="text" class="form-control" name="full_name" required></div>
+                        <div class="form-group mb-2"><label for="email">Email</label><input type="email" class="form-control" name="email" required></div>
+                        <div class="form-group mb-2"><label for="password">Password</label><input type="password" class="form-control" name="password" required></div>
+                        <!-- Add an ID to this select element -->
+                        <div class="form-group mb-3"><label for="role">Role</label><select class="form-select" id="user-role-select" name="role" required><option value="employee">Employee</option><option value="manager">Manager</option></select></div>
+                        <button type="submit" class="btn btn-primary w-100">Create User</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-8">
+            <div class="card h-100">
+                <div class="card-header"><h3>Existing Users</h3></div>
+                <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                    <table class="table table-striped">
+                        <thead><tr><th>Full Name</th><th>Email</th><th>Role</th><th>Actions</th></tr></thead>
+                        <tbody>
+                            {% for user in users %}
+                            <tr>
+                                <td>{{ user.full_name }}</td>
+                                <td>{{ user.email }}</td>
+                                <td>{{ user.role|capitalize }}</td>
+                                <td>
+                                    {% if user.role != 'admin' %}
+                                    <form method="POST" action="{{ url_for('main.admin_delete_user', user_id=user.id) }}" onsubmit="return confirm('Are you sure you want to delete this user?');">
+                                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                                    </form>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Second Row: Team Management -->
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-header"><h3>Create New Team</h3></div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('main.admin_create_team') }}">
+                        <div class="form-group mb-3"><label for="name">Team Name</label><input type="text" class="form-control" name="name" required></div>
+                        <div class="form-group mb-3"><label for="manager_id">Assign Manager</label>
+                            <!-- Add an ID to this select element -->
+                            <select class="form-select" id="manager-select" name="manager_id" required>
+                                <option></option> <!-- Placeholder for Select2 -->
+                                {% for manager in managers %}
+                                    <option value="{{ manager.id }}">{{ manager.full_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-success w-100">Create Team</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-8">
+            <div class="card h-100">
+                <div class="card-header"><h3>Existing Teams</h3></div>
+                <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                    <table class="table table-striped">
+                        <thead><tr><th>Team Name</th><th>Manager</th><th>Members</th><th>Actions</th></tr></thead>
+                        <tbody>
+                            {% for team in teams %}
+                            <tr>
+                                <td>{{ team.name }}</td>
+                                <td>{% if team.manager %}{{ team.manager.full_name }}{% else %}<span class="text-danger">None</span>{% endif %}</td>
+                                <td>{{ team.members|length }}</td>
+                                <td><a href="{{ url_for('main.admin_manage_team', team_id=team.id) }}" class="btn btn-sm btn-info">Manage</a></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+
+<!-- NEW: Add the scripts block to activate Select2 -->
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        // Apply Select2 to the manager selection dropdown
+        $('#manager-select').select2({
+            theme: "bootstrap-5",
+            placeholder: "Search for a manager...",
+        });
+
+        // Apply Select2 to the user role selection dropdown
+        $('#user-role-select').select2({
+            theme: "bootstrap-5",
+            minimumResultsForSearch: Infinity, // Hides the search box since there are only 2 options
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% block title %}Manage {{ team.name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <a href="{{ url_for('main.admin_dashboard') }}" class="btn btn-sm btn-secondary mb-3">← Back to Admin Dashboard</a>
+    <h1>Manage Team: <span class="text-primary">{{ team.name }}</span></h1>
+    <p><strong>Manager:</strong> {{ team.manager.full_name }}</p>
+
+    <div class="row">
+        <!-- Add Member Card -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header"><h4>Add Member</h4></div>
+                <div class="card-body">
+                    <form action="{{ url_for('main.admin_add_team_member', team_id=team.id) }}" method="POST">
+                        <div class="form-group mb-3">
+                            <label for="employee-select">Select Unassigned Employee</label>
+                            <!-- Add an ID to this select element -->
+                            <select name="employee_id" id="employee-select" class="form-select" required>
+                                <option></option> <!-- Placeholder for Select2 -->
+                                {% for emp in unassigned_employees %}
+                                <option value="{{ emp.id }}">{{ emp.full_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-success">Add to Team</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Current Members Card -->
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header"><h4>Current Members ({{ team.members|length }})</h4></div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        {% for member in team.members %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            {{ member.full_name }}
+                            <a href="{{ url_for('main.admin_remove_team_member', employee_id=member.id) }}" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to remove this member from the team?');">Remove</a>
+                        </li>
+                        {% else %}
+                        <li class="list-group-item">No members in this team yet.</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+
+<!-- NEW: Add the scripts block to activate Select2 -->
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        // Apply Select2 to the employee selection dropdown
+        $('#employee-select').select2({
+            theme: "bootstrap-5",
+            placeholder: "Search for an employee...",
+        });
+    });
+</script>
+{% endblock %}

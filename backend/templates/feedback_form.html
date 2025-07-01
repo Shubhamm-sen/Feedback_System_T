@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}{% if edit_mode %}Edit{% else %}Submit{% endif %} Feedback{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">
+                        <i class="fas fa-{% if edit_mode %}edit{% else %}paper-plane{% endif %} me-2"></i>
+                        {% if edit_mode %}Edit Feedback{% else %}Submit New Feedback{% endif %}
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <!-- The form action depends on whether we are editing or creating -->
+                    <form method="POST" action="{% if edit_mode %}{{ url_for('main.edit_feedback', feedback_id=feedback.id) }}{% else %}{{ url_for('main.create_feedback') }}{% endif %}">
+                        
+                        <!-- Only show the recipient dropdown when CREATING -->
+                        {% if not edit_mode %}
+                        <div class="mb-3">
+                            <label for="recipient_id" class="form-label">Select Recipient</label>
+                            <select class="form-select" id="recipient_id" name="recipient_id" required>
+                                <option></option>
+                                {% for user in recipients %}
+                                <option value="{{ user.id }}">{{ user.full_name }} ({{ user.role|capitalize }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        {% else %}
+                        <div class="mb-3">
+                            <label>Recipient</label>
+                            <input type="text" class="form-control" value="{{ feedback.recipient.full_name }}" readonly>
+                        </div>
+                        {% endif %}
+
+                        <!-- Strengths Textarea -->
+                        <div class="mb-3">
+                            <label for="strengths" class="form-label">Strengths</label>
+                            <textarea class="form-control" name="strengths" rows="5" required>{{ feedback.strengths if edit_mode else '' }}</textarea>
+                        </div>
+
+                        <!-- Improvements Textarea -->
+                        <div class="mb-3">
+                            <label for="improvements" class="form-label">Areas for Improvement</label>
+                            <textarea class="form-control" name="improvements" rows="5" required>{{ feedback.improvements if edit_mode else '' }}</textarea>
+                        </div>
+
+                        <!-- Sentiment Dropdown -->
+                        <div class="mb-4">
+                            <label for="sentiment" class="form-label">Overall Sentiment</label>
+                            <select class="form-select" id="sentiment" name="sentiment" required>
+                                <option value="positive" {% if edit_mode and feedback.sentiment == 'positive' %}selected{% endif %}>Positive</option>
+                                <option value="neutral" {% if edit_mode and feedback.sentiment == 'neutral' %}selected{% endif %}>Neutral</option>
+                                <option value="negative" {% if edit_mode and feedback.sentiment == 'negative' %}selected{% endif %}>Negative</option>
+                            </select>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('main.' + current_user.role + '_dashboard') }}" class="btn btn-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary">
+                                {% if edit_mode %}Update Feedback{% else %}Submit Feedback{% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        $('#recipient_id').select2({
+            theme: "bootstrap-5",
+            placeholder: "Search for a person...",
+        });
+    });
+</script>
+{% endblock %}

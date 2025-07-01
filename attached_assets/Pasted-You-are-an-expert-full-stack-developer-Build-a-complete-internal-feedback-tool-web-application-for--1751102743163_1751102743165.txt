@@ -1,0 +1,92 @@
+You are an expert full-stack developer. Build a complete internal feedback tool web application for companies using the following stack:
+
+Frontend: React.js with Vite
+Backend: Python using FastAPI
+Database: MongoDB
+
+🎯 Purpose:
+Enable managers and employees to share structured, ongoing feedback in a secure, clean, and user-friendly environment.
+
+✅ Core Features
+Authentication & Roles
+
+Two user roles: Manager and Employee
+
+Login system with JWT-based authentication
+
+Role-based access control:
+
+A manager can only view and interact with their assigned team
+
+An employee can only view their own feedback
+
+Feedback Submission
+
+Managers can submit structured feedback:
+
+Strengths (text field)
+
+Areas to improve (text field)
+
+Sentiment (dropdown: positive / neutral / negative)
+
+Feedback history should be viewable by both manager and employee
+
+Managers can update/edit past feedback
+
+Feedback Visibility
+
+Employees can view only feedback received by them
+
+Employees can acknowledge feedback (toggle or button)
+
+Managers can see which feedback has been acknowledged
+
+Dashboard
+
+Manager dashboard: team overview (feedback counts, sentiment trends using a chart)
+
+Employee dashboard: timeline-style display of received feedback
+
+💡 Bonus Features (if time allows)
+Employees can request feedback from managers
+
+Tags for feedback (e.g., "communication", "teamwork")
+
+Export feedback as PDF
+
+Employee comments on feedback
+
+Markdown support in text fields
+
+Anonymous peer feedback (optional toggle)
+
+Email/in-app notifications
+
+⚙️ Tech Notes
+Use React.js with Vite for a fast, modular frontend
+
+Use FastAPI for backend with proper API versioning and Pydantic models
+
+Use MongoDB with Mongoose-like schema validation
+
+Use Docker for backend containerization — provide a Dockerfile that:
+
+Installs dependencies
+
+Runs the FastAPI server
+
+Supports environment variables for DB connection
+
+Include CORS handling and security headers in FastAPI
+
+📁 Deliverables
+Full GitHub repo with:
+
+README.md (setup instructions, tech stack, design decisions)
+
+Dockerfile for the backend
+
+Clear folder structure: client/ (React app), server/ (FastAPI)
+
+Make sure the code is modular, clean, and includes inline comments. Add seed data and instructions for running locally using .env files.
