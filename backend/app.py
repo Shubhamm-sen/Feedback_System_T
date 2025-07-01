@@ -35,7 +35,7 @@ def create_app():
 
     # ✅ CORS fix: Allow frontend (Vercel) to access backend (Railway)
     CORS(app, origins=[
-        "https://your-vercel-site.vercel.app",   # ✅ replace with your real Vercel domain
+        "https://feedback-system-t.vercel.app",   # ✅ replace with your real Vercel domain
     ], supports_credentials=True)
 
     # --- 5. Register Blueprints ---
