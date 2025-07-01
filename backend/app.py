@@ -32,7 +32,7 @@ def create_app():
     # Using an environment variable for the URI is highly recommended for security.
     # For now, this is fine for development.
     app.config['MONGODB_SETTINGS'] = {
-        'host': os.environ.get('MONGO_DB_URI')
+        'host': os.environ.get('MONGODB_URI')
     }
 
     # --- 3. Initialize extensions using the app object ---
