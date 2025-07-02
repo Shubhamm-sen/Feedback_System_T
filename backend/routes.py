@@ -7,12 +7,12 @@ import os
 
 bp = Blueprint('main', __name__)
 
-# ✅ Load Supabase client securely
+#  Load Supabase client securely
 supabase_url = os.getenv("SUPABASE_URL")
 supabase_key = os.getenv("SUPABASE_KEY")
 supabase = create_client(supabase_url, supabase_key)
 
-# ✅ Homepage: redirect based on session role
+#  Homepage: redirect based on session role
 @bp.route('/')
 def index():
     user_id = session.get('user_id')
@@ -32,7 +32,7 @@ def index():
     session.clear()
     return redirect(url_for('main.login'))
 
-# ✅ Login route — POST with JSON support for frontend
+# Login route — POST with JSON support for frontend
 @bp.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -55,4 +55,37 @@ def login():
             msg = f"Welcome, {user['full_name']}!"
 
             if request.is_json:
-                return jsonify({"success": True, "message": msg, "user": user, "token": "
+                return jsonify({
+                    "success": True,
+                    "message": msg,
+                    "user": user,
+                    "token": "SESSION_TOKEN_PLACEHOLDER"  # Replace if using JWT later
+                }), 200
+
+            flash(msg, 'success')
+            if user['role'] == 'admin':
+                return redirect(url_for('main.admin_dashboard'))
+            elif user['role'] == 'manager':
+                return redirect(url_for('main.manager_dashboard'))
+            else:
+                return redirect(url_for('main.employee_dashboard'))
+
+        msg = 'Invalid email or password.'
+        if request.is_json:
+            return jsonify({"success": False, "message": msg}), 401
+        flash(msg, 'danger')
+        return redirect(url_for('main.login'))
+
+    return render_template('login.html')
+
+#  Logout route
+@bp.route('/logout')
+def logout():
+    session.clear()
+    flash('You have been logged out successfully.', 'info')
+    return redirect(url_for('main.login'))
+
+#  Inject user into templates
+@bp.context_processor
+def inject_user():
+    return {'current_user': get_current_user()}
