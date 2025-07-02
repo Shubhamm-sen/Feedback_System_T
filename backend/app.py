@@ -3,14 +3,20 @@ import logging
 from flask import Flask
 from werkzeug.middleware.proxy_fix import ProxyFix
 from dotenv import load_dotenv
+from flask_cors import CORS
+from extensions import jwt
+from supabase import create_client
+
+# --- Load .env variables ---
 load_dotenv()
 
-# --- 1. Import extensions from extensions.py ---
-from extensions import db, jwt, cors
-from flask_cors import CORS  # ✅ Important: CORS must be imported directly
-
-# Configure logging
+# --- Logging ---
 logging.basicConfig(level=logging.DEBUG)
+
+# --- Supabase Setup ---
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 
 def create_app():
@@ -19,26 +25,20 @@ def create_app():
                 static_folder='static')
     app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
-    # --- 2. Application Config ---
-    app.config['SECRET_KEY'] = os.environ.get("SESSION_SECRET", "dev-secret-key-change-in-production")
-    app.config['JWT_SECRET_KEY'] = os.environ.get("JWT_SECRET_KEY", "jwt-secret-change-in-production")
+    # --- App Configuration ---
+    app.config['SECRET_KEY'] = os.getenv("SESSION_SECRET", "dev-secret-key-change-in-production")
+    app.config['JWT_SECRET_KEY'] = os.getenv("JWT_SECRET_KEY", "jwt-secret-change-in-production")
     app.config['JWT_ACCESS_TOKEN_EXPIRES'] = False
 
-    # --- 3. MongoDB Config ---
-    app.config['MONGODB_SETTINGS'] = {
-        'host': os.environ.get('MONGODB_URI')
-    }
-
-    # --- 4. Init Extensions ---
-    db.init_app(app)
+    # --- Initialize JWT only (No Mongo) ---
     jwt.init_app(app)
 
-    # ✅ CORS fix: Allow frontend (Vercel) to access backend (Railway)
+    # --- Enable CORS for frontend ---
     CORS(app, origins=[
-        "https://feedback-system-t.vercel.app",   # ✅ replace with your real Vercel domain
+        "https://feedback-system-t.vercel.app"  # ✅ Replace with your actual deployed frontend domain
     ], supports_credentials=True)
 
-    # --- 5. Register Blueprints ---
+    # --- Register Blueprints ---
     with app.app_context():
         from routes import bp as main_blueprint
         app.register_blueprint(main_blueprint)
@@ -46,5 +46,5 @@ def create_app():
     return app
 
 
-# --- 6. Create App ---
+# --- WSGI entrypoint for deployment ---
 app = create_app()
