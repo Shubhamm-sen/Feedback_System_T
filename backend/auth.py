@@ -1,6 +1,6 @@
 from flask import session, redirect, url_for, flash
 from functools import wraps
-from werkzeug.security import check_password_hash
+import bcrypt
 from supabase import create_client
 import os
 
@@ -30,12 +30,12 @@ def role_required(required_role):
         return decorated_function
     return decorator
 
-# ✅ Authenticate user
+# ✅ Authenticate user using bcrypt
 def authenticate_user(email, password):
     try:
         response = supabase.table('users').select('*').eq('email', email).single().execute()
         user = response.data
-        if user and check_password_hash(user['password_hash'], password):
+        if user and bcrypt.checkpw(password.encode('utf-8'), user['password_hash'].encode('utf-8')):
             return user
     except Exception as e:
         print(f"[Auth Error] {e}")
