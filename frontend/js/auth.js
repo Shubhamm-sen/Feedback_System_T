@@ -5,12 +5,12 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
     const password = document.getElementById('password').value;
 
     try {
-        const response = await fetch('https://feedback-system-t-1.onrender.com', {
+        const response = await fetch('https://feedback-system-t-1.onrender.com/login', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            credentials: 'include',  // Include cookies for session support if needed
+            credentials: 'include',  // Include cookies for session support
             body: JSON.stringify({
                 email: username,
                 password: password
@@ -20,9 +20,9 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
         const data = await response.json();
 
         if (response.ok) {
-            localStorage.setItem('token', data.token);
+            localStorage.setItem('token', data.token);  // optional, if you're using JWT
             alert('Login successful!');
-            window.location.href = '/dashboard.html'; // Or any page after login
+            window.location.href = '/dashboard.html'; // Redirect to dashboard
         } else {
             alert(data.message || 'Invalid login credentials.');
         }
