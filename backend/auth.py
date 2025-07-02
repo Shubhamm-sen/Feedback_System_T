@@ -18,11 +18,15 @@ def role_required(required_role):
                 flash('Please log in to access this page.', 'warning')
                 return redirect(url_for('main.login'))
 
-            response = supabase.table('users').select('*').eq('id', user_id).single().execute()
-            user = response.data
-
-            if not user or user.get('role') != required_role:
-                flash('Access denied. You do not have the required permissions.', 'danger')
+            try:
+                response = supabase.table('users').select('*').eq('id', user_id).single().execute()
+                user = response.data
+                if not user or user.get('role') != required_role:
+                    flash('Access denied. You do not have the required permissions.', 'danger')
+                    return redirect(url_for('main.login'))
+            except Exception as e:
+                print(f"[Role Check Error] {e}")
+                flash('Something went wrong while verifying your role.', 'danger')
                 return redirect(url_for('main.login'))
 
             return f(*args, **kwargs)
@@ -37,4 +41,17 @@ def authenticate_user(email, password):
         if user and user['password_hash'] == password:
             return user
     except Exception as e:
-        print(f"[Auth]()
+        print(f"[Auth Error] {e}")
+    return None
+
+# ✅ Get current logged-in user from session
+def get_current_user():
+    user_id = session.get('user_id')
+    if not user_id:
+        return None
+    try:
+        response = supabase.table('users').select('*').eq('id', user_id).single().execute()
+        return response.data if response.data else None
+    except Exception as e:
+        print(f"[Session Error] {e}")
+        return None
