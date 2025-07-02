@@ -9,8 +9,8 @@ import os
 
 bp = Blueprint('main', __name__)
 
-supabase_url = os.getenv("https://vqthalnqpmsfldpovlrp.supabase.co")
-supabase_key = os.getenv("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZxdGhhbG5xcG1zZmxkcG92bHJwIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MTQ0MjU3OSwiZXhwIjoyMDY3MDE4NTc5fQ.2b0xel2abCcRNsQio4uR6E_5ImeHaYIT56zARaHEmqw")
+supabase_url = os.getenv("SUPABASE_URL")
+supabase_key = os.getenv("SUPABASE_KEY")
 supabase = create_client(supabase_url, supabase_key)
 
 @bp.route('/')
