@@ -1,16 +1,6 @@
 from flask import session, redirect, url_for, flash
 from functools import wraps
-from supabase import create_client
-import os
-
-# ✅ Initialize Supabase client
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY")
-
-if not SUPABASE_URL or not SUPABASE_KEY:
-    raise ValueError("❌ Supabase credentials missing in environment.")
-
-supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+from supabase_client import supabase  # ✅ Use centralized client
 
 # ✅ Role-required decorator
 def role_required(required_role):
@@ -37,7 +27,7 @@ def role_required(required_role):
         return decorated_function
     return decorator
 
-# ✅ Authenticate user with plaintext password (no hashing)
+# ✅ Authenticate user using plaintext password (for dev only)
 def authenticate_user(email, password):
     try:
         response = supabase.table('users').select('*').eq('email', email).single().execute()
