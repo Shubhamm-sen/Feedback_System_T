@@ -1,61 +1,72 @@
-# models.py
-import datetime
-from extensions import db
+# models.py — Supabase Version
+import os
+from dotenv import load_dotenv
+from supabase import create_client
 
-#
-# --- We are removing the old @dataclass definitions ---
-#
+load_dotenv()
 
-class User(db.Document):
-    """ User model for Employees, Managers, and Admins. """
-    email = db.EmailField(required=True, unique=True)
-    password_hash = db.StringField(required=True)
-    full_name = db.StringField(required=True, max_length=100)
-    # --- CHANGE: Added 'admin' to the list of choices ---
-    role = db.StringField(required=True, choices=('employee', 'manager', 'admin'))
-    team = db.ReferenceField('Team')
-    created_at = db.DateTimeField(default=datetime.datetime.utcnow)
-
-    # Required for Flask-Login compatibility
-    def is_authenticated(self):
-        return True
-
-    def is_active(self):
-        return True
-
-    def is_anonymous(self):
-        return False
-
-    def get_id(self):
-        return str(self.id)
+# --- Supabase Setup ---
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 
-class Team(db.Document):
-    """ Team model to group users under a manager. """
-    name = db.StringField(required=True, unique=True, max_length=100)
-    manager = db.ReferenceField('User', required=True)
-    members = db.ListField(db.ReferenceField('User'))
-    created_at = db.DateTimeField(default=datetime.datetime.utcnow)
+# --- USERS ---
+def get_user_by_email(email):
+    return supabase.table("users").select("*").eq("email", email).single().execute().data
 
 
-class Feedback(db.Document):
-    """ Feedback model. """
-    # This assumes a model where anyone can give feedback to anyone.
-    # We can adjust if feedback is only Manager->Employee or Employee->Manager.
-    author = db.ReferenceField('User', required=True)
-    recipient = db.ReferenceField('User', required=True)
-    strengths = db.StringField(default="") # Making these optional
-    improvements = db.StringField(default="") # Making these optional
-    # content = db.StringField(required=True) # Adding a general content field
+def get_user_by_id(user_id):
+    return supabase.table("users").select("*").eq("id", user_id).single().execute().data
 
-    strengths = db.StringField(required=True)
-    improvements = db.StringField(required=True)
 
-    sentiment = db.StringField(required=True, choices=('positive', 'neutral', 'negative'))
-    status = db.StringField(required=True, default='pending', choices=('pending', 'acknowledged'))
-    created_at = db.DateTimeField(default=datetime.datetime.utcnow)
-    acknowledged_at = db.DateTimeField()
-    
-    meta = {
-        'indexes': ['author', 'recipient']
-    }
+def create_user(email, password_hash, full_name, role, team_id=None):
+    return supabase.table("users").insert({
+        "email": email,
+        "password_hash": password_hash,
+        "full_name": full_name,
+        "role": role,
+        "team_id": team_id
+    }).execute()
+
+
+# --- TEAMS ---
+def create_team(name, manager_id):
+    return supabase.table("teams").insert({
+        "name": name,
+        "manager_id": manager_id,
+    }).execute()
+
+
+def get_team_by_manager(manager_id):
+    return supabase.table("teams").select("*").eq("manager_id", manager_id).single().execute().data
+
+
+def assign_employee_to_team(employee_id, team_id):
+    return supabase.table("users").update({"team_id": team_id}).eq("id", employee_id).execute()
+
+
+# --- FEEDBACK ---
+def give_feedback(author_id, recipient_id, strengths, improvements, sentiment):
+    return supabase.table("feedback").insert({
+        "author_id": author_id,
+        "recipient_id": recipient_id,
+        "strengths": strengths,
+        "improvements": improvements,
+        "sentiment": sentiment,
+        "status": "pending"
+    }).execute()
+
+
+def acknowledge_feedback(feedback_id):
+    return supabase.table("feedback").update({
+        "status": "acknowledged"
+    }).eq("id", feedback_id).execute()
+
+
+def get_feedback_for_user(user_id):
+    return supabase.table("feedback").select("*").eq("recipient_id", user_id).execute().data
+
+
+def get_feedback_by_author(author_id):
+    return supabase.table("feedback").select("*").eq("author_id", author_id).execute().data
