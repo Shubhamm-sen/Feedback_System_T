@@ -16,8 +16,11 @@ logging.basicConfig(level=logging.DEBUG)
 # --- Supabase Setup ---
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
-supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
+if not SUPABASE_URL or not SUPABASE_KEY:
+    raise ValueError("❌ Missing Supabase credentials in environment variables.")
+
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 def create_app():
     app = Flask(__name__,
@@ -30,12 +33,12 @@ def create_app():
     app.config['JWT_SECRET_KEY'] = os.getenv("JWT_SECRET_KEY", "jwt-secret-change-in-production")
     app.config['JWT_ACCESS_TOKEN_EXPIRES'] = False
 
-    # --- Initialize JWT only (No Mongo) ---
+    # --- Initialize JWT only (No MongoDB now) ---
     jwt.init_app(app)
 
     # --- Enable CORS for frontend ---
     CORS(app, origins=[
-        "https://feedback-system-t.vercel.app"  # ✅ Replace with your actual deployed frontend domain
+        "https://feedback-system-t.vercel.app"
     ], supports_credentials=True)
 
     # --- Register Blueprints ---
@@ -45,6 +48,9 @@ def create_app():
 
     return app
 
-
 # --- WSGI entrypoint for deployment ---
 app = create_app()
+
+# --- Enable Flask Debug locally only ---
+if __name__ == "__main__":
+    app.run(debug=True)
