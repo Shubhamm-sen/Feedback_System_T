@@ -97,3 +97,94 @@ def manager_dashboard():
 @role_required('employee')
 def employee_dashboard():
     return render_template('employee_dashboard.html')
+
+# ✅ Feedback creation route (reusable form)
+@bp.route('/feedback/create', methods=['GET', 'POST'])
+@role_required('manager')
+def create_feedback():
+    manager_id = session.get('user_id')
+
+    if request.method == 'POST':
+        recipient_id = request.form.get('recipient_id')
+        strengths = request.form.get('strengths')
+        improvements = request.form.get('improvements')
+        sentiment = request.form.get('sentiment')
+
+        if not recipient_id or not strengths or not improvements or not sentiment:
+            flash('All fields are required.', 'danger')
+            return redirect(url_for('main.create_feedback'))
+
+        try:
+            created_at = datetime.utcnow().isoformat()
+            supabase.table('feedback').insert({
+                "author_id": manager_id,
+                "recipient_id": recipient_id,
+                "strengths": strengths,
+                "improvements": improvements,
+                "sentiment": sentiment,
+                "status": "pending",
+                "created_at": created_at
+            }).execute()
+
+            flash("✅ Feedback submitted successfully!", "success")
+            return redirect(url_for('main.manager_dashboard'))
+
+        except Exception as e:
+            print(f"[Create Feedback Error] {e}")
+            flash("❌ Failed to submit feedback. Try again.", "danger")
+            return redirect(url_for('main.create_feedback'))
+
+    response = supabase.table('users').select('id, full_name, role').eq('manager_id', manager_id).execute()
+    recipients = response.data if response.data else []
+
+    return render_template('feedback_form.html', edit_mode=False, recipients=recipients)
+
+# ✅ Feedback edit route
+@bp.route('/feedback/<feedback_id>/edit', methods=['GET', 'POST'])
+@role_required('manager')
+def edit_feedback(feedback_id):
+    if request.method == 'POST':
+        strengths = request.form.get('strengths')
+        improvements = request.form.get('improvements')
+        sentiment = request.form.get('sentiment')
+
+        try:
+            supabase.table('feedback').update({
+                "strengths": strengths,
+                "improvements": improvements,
+                "sentiment": sentiment
+            }).eq('id', feedback_id).execute()
+
+            flash("✅ Feedback updated successfully.", "success")
+            return redirect(url_for('main.manager_dashboard'))
+
+        except Exception as e:
+            print(f"[Edit Feedback Error] {e}")
+            flash("❌ Could not update feedback.", "danger")
+            return redirect(url_for('main.edit_feedback', feedback_id=feedback_id))
+
+    try:
+        fb_res = supabase.table('feedback').select('*').eq('id', feedback_id).single().execute()
+        feedback = fb_res.data
+
+        recipient_res = supabase.table('users').select('id, full_name').eq('id', feedback['recipient_id']).single().execute()
+        feedback['recipient'] = recipient_res.data
+
+        return render_template('feedback_form.html', edit_mode=True, feedback=feedback)
+
+    except Exception as e:
+        print(f"[Fetch Feedback Error] {e}")
+        flash("❌ Feedback not found.", "danger")
+        return redirect(url_for('main.manager_dashboard'))
+
+# ✅ Feedback delete route
+@bp.route('/feedback/<feedback_id>/delete', methods=['POST'])
+@role_required('manager')
+def delete_feedback(feedback_id):
+    try:
+        supabase.table('feedback').delete().eq('id', feedback_id).execute()
+        flash("🗑️ Feedback deleted.", "info")
+    except Exception as e:
+        print(f"[Delete Feedback Error] {e}")
+        flash("❌ Failed to delete feedback.", "danger")
+    return redirect(url_for('main.manager_dashboard'))
