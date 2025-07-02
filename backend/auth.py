@@ -1,93 +1,46 @@
-# # auth.py
-
-# from flask import session, redirect, url_for, flash
-# from werkzeug.security import check_password_hash
-# from functools import wraps
-
-# # --- NO 'from models import ...' AT THE TOP ---
-
-# def role_required(required_role):
-#     def decorator(f):
-#         @wraps(f)
-#         def decorated_function(*args, **kwargs):
-#             from models import User  # Import is INSIDE
-#             user_id = session.get('user_id')
-#             if not user_id:
-#                 flash('Please log in to access this page.', 'warning')
-#                 return redirect(url_for('main.login'))
-#             user = User.objects(pk=user_id).first()
-#             if not user or user.role != required_role:
-#                 flash('Access denied. You do not have the required permissions.', 'danger')
-#                 return redirect(url_for('main.login'))
-#             return f(*args, **kwargs)
-#         return decorated_function
-#     return decorator
-
-# def manager_required(f):
-#     """Convenience decorator for requiring 'manager' role."""
-#     return role_required('manager')
-
-# def employee_required(f):
-#     """Convenience decorator for requiring 'employee' role."""
-#     return role_required('employee')
-
-# # --- CHANGE: Added admin_required decorator for our new role ---
-# def admin_required(f):
-#     """Convenience decorator for requiring 'admin' role."""
-#     return role_required('admin')
-
-# def authenticate_user(email: str, password: str):
-#     from models import User  # Import is INSIDE
-#     user = User.objects(email=email).first()
-#     if user and check_password_hash(user.password_hash, password):
-#         return user
-#     return None
-
-# def get_current_user():
-#     from models import User  # Import is INSIDE
-#     user_id = session.get('user_id')
-#     if not user_id:
-#         return None
-#     return User.objects(pk=user_id).first()
-
-
-
-# auth.py (Simplified Version)
-
 from flask import session, redirect, url_for, flash
-from werkzeug.security import check_password_hash
 from functools import wraps
+import bcrypt
+from backend.supabase_client import supabase  # Make sure this file exists and has Supabase client
 
-# We only need ONE decorator function.
+# --- Role-based access decorator ---
 def role_required(required_role):
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
-            from models import User
             user_id = session.get('user_id')
             if not user_id:
                 flash('Please log in to access this page.', 'warning')
                 return redirect(url_for('main.login'))
-            user = User.objects(pk=user_id).first()
-            if not user or user.role != required_role:
+
+            # Fetch user from Supabase
+            response = supabase.table('users').select('*').eq('id', user_id).single().execute()
+            user = response.data
+
+            if not user or user.get('role') != required_role:
                 flash('Access denied. You do not have the required permissions.', 'danger')
                 return redirect(url_for('main.login'))
+
             return f(*args, **kwargs)
         return decorated_function
     return decorator
 
-# --- The rest of the file is the same ---
-
+# --- Authentication Function ---
 def authenticate_user(email: str, password: str):
-    from models import User
-    user = User.objects(email=email).first()
-    if user and check_password_hash(user.password_hash, password):
-        return user
+    try:
+        response = supabase.table('users').select('*').eq('email', email).single().execute()
+        user = response.data
+
+        if user and bcrypt.checkpw(password.encode(), user['password_hash'].encode()):
+            return user
+    except Exception as e:
+        print(f"[Auth Error] {e}")
     return None
 
+# --- Get Current User from Session ---
 def get_current_user():
-    from models import User
     user_id = session.get('user_id')
     if not user_id:
         return None
-    return User.objects(pk=user_id).first()
+    response = supabase.table('users').select('*').eq('id', user_id).single().execute()
+    return response.data if response.data else None
