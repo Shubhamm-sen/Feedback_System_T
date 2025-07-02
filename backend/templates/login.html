@@ -1,115 +1,57 @@
-from flask import render_template, request, redirect, url_for, flash, session, jsonify, Blueprint
-from datetime import datetime
-from werkzeug.security import generate_password_hash, check_password_hash
-from auth import authenticate_user, get_current_user, role_required
-from supabase import create_client
-import os
+{% extends "base.html" %}
 
-bp = Blueprint('main', __name__)
+{% block title %}Login - Internal Feedback Tool{% endblock %}
 
-# ✅ Load Supabase client securely
-supabase_url = os.getenv("SUPABASE_URL")
-supabase_key = os.getenv("SUPABASE_KEY")
-supabase = create_client(supabase_url, supabase_key)
-
-# ✅ Homepage: redirect based on session role
-@bp.route('/')
-def index():
-    user_id = session.get('user_id')
-    if not user_id:
-        return redirect(url_for('main.login'))
-
-    user = get_current_user()
-    if user:
-        role = user.get('role')
-        if role == 'admin':
-            return redirect(url_for('main.admin_dashboard'))
-        elif role == 'manager':
-            return redirect(url_for('main.manager_dashboard'))
-        else:
-            return redirect(url_for('main.employee_dashboard'))
-
-    session.clear()
-    return redirect(url_for('main.login'))
-
-# ✅ Login route — POST with JSON support for frontend
-@bp.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        # Support both form and JSON payloads
-        data = request.get_json() if request.is_json else request.form
-        email = data.get('email')
-        password = data.get('password')
-
-        if not email or not password:
-            msg = 'Please provide both email and password.'
-            if request.is_json:
-                return jsonify({"success": False, "message": msg}), 400
-            flash(msg, 'danger')
-            return redirect(url_for('main.login'))
-
-        # ✅ Supabase user check
-        result = supabase.table("users").select("*").eq("email", email).execute()
-        users = result.data
-
-        if users:
-            user = users[0]
-            if check_password_hash(user['password_hash'], password):
-                session['user_id'] = user['id']
-                session['user_role'] = user['role']
-                msg = f"Welcome, {user['full_name']}!"
-
-                if request.is_json:
-                    return jsonify({
-                        "success": True,
-                        "message": msg,
-                        "user": user,
-                        "token": "SESSION_TOKEN_PLACEHOLDER"
-                    }), 200
-
-                flash(msg, 'success')
-                if user['role'] == 'admin':
-                    return redirect(url_for('main.admin_dashboard'))
-                elif user['role'] == 'manager':
-                    return redirect(url_for('main.manager_dashboard'))
-                else:
-                    return redirect(url_for('main.employee_dashboard'))
-            else:
-                msg = 'Invalid password.'
-        else:
-            msg = 'User not found.'
-
-        if request.is_json:
-            return jsonify({"success": False, "message": msg}), 401
-        flash(msg, 'danger')
-        return redirect(url_for('main.login'))
-
-    return render_template('login.html')
-
-# ✅ Logout route
-@bp.route('/logout')
-def logout():
-    session.clear()
-    flash('You have been logged out successfully.', 'info')
-    return redirect(url_for('main.login'))
-
-# ✅ Inject user into templates
-@bp.context_processor
-def inject_user():
-    return {'current_user': get_current_user()}
-
-# ✅ Dummy role-based dashboards
-@bp.route('/admin')
-@role_required('admin')
-def admin_dashboard():
-    return render_template('admin_dashboard.html')
-
-@bp.route('/manager')
-@role_required('manager')
-def manager_dashboard():
-    return render_template('manager_dashboard.html')
-
-@bp.route('/employee')
-@role_required('employee')
-def employee_dashboard():
-    return render_template('employee_dashboard.html')
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-4">
+            <div class="card shadow">
+                <div class="card-header text-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-sign-in-alt me-2"></i>
+                        Login
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label for="email" class="form-label">EMAIL</label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-user"></i>
+                                </span>
+                                <input type="email" class="form-control" id="email" name="email" placeholder="Enter your email address" required>
+                                
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="password" class="form-label">Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-lock"></i>
+                                </span>
+                                <input type="password" class="form-control" id="password" name="password" required>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-sign-in-alt me-2"></i>
+                            Login
+                        </button>
+                    </form>
+                </div>
+                <div class="card-footer text-center text-muted">
+                    <small>
+                        <strong>Demo Accounts:</strong><br>
+                         Admin:    admin@example.com / admin123<br>
+                         Manager:  manager1@example.com / manager123<br>
+                         Employee: employee1@example.com / employee123<br>
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
