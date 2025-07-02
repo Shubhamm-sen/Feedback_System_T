@@ -6,6 +6,10 @@ import os
 # ✅ Initialize Supabase client
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+
+if not SUPABASE_URL or not SUPABASE_KEY:
+    raise ValueError("❌ Supabase credentials missing in environment.")
+
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # ✅ Role-required decorator
@@ -26,19 +30,19 @@ def role_required(required_role):
                     return redirect(url_for('main.login'))
             except Exception as e:
                 print(f"[Role Check Error] {e}")
-                flash('Something went wrong while verifying your role.', 'danger')
+                flash('Error checking user role.', 'danger')
                 return redirect(url_for('main.login'))
 
             return f(*args, **kwargs)
         return decorated_function
     return decorator
 
-# ✅ Authenticate user using plaintext password comparison
+# ✅ Authenticate user with plaintext password (no hashing)
 def authenticate_user(email, password):
     try:
         response = supabase.table('users').select('*').eq('email', email).single().execute()
         user = response.data
-        if user and user['password_hash'] == password:
+        if user and user.get('password_hash') == password:
             return user
     except Exception as e:
         print(f"[Auth Error] {e}")
