@@ -1,18 +1,17 @@
 from flask import render_template, request, redirect, url_for, flash, session, jsonify, Blueprint
 from datetime import datetime
-from werkzeug.security import generate_password_hash
 from auth import authenticate_user, get_current_user, role_required
 from supabase import create_client
 import os
 
 bp = Blueprint('main', __name__)
 
-#  Load Supabase client securely
+# ✅ Load Supabase client securely
 supabase_url = os.getenv("SUPABASE_URL")
 supabase_key = os.getenv("SUPABASE_KEY")
 supabase = create_client(supabase_url, supabase_key)
 
-#  Homepage: redirect based on session role
+# ✅ Homepage: redirect based on session role
 @bp.route('/')
 def index():
     user_id = session.get('user_id')
@@ -32,7 +31,7 @@ def index():
     session.clear()
     return redirect(url_for('main.login'))
 
-# Login route — POST with JSON support for frontend
+# ✅ Login route — POST with JSON support for frontend
 @bp.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -59,7 +58,7 @@ def login():
                     "success": True,
                     "message": msg,
                     "user": user,
-                    "token": "SESSION_TOKEN_PLACEHOLDER"  # Replace if using JWT later
+                    "token": "SESSION_TOKEN_PLACEHOLDER"
                 }), 200
 
             flash(msg, 'success')
@@ -78,19 +77,19 @@ def login():
 
     return render_template('login.html')
 
-#  Logout route
+# ✅ Logout route
 @bp.route('/logout')
 def logout():
     session.clear()
     flash('You have been logged out successfully.', 'info')
     return redirect(url_for('main.login'))
 
-#  Inject user into templates
+# ✅ Inject user into templates
 @bp.context_processor
 def inject_user():
     return {'current_user': get_current_user()}
 
-#  Dummy role-based dashboards
+# ✅ Dummy role-based dashboards
 @bp.route('/admin')
 @role_required('admin')
 def admin_dashboard():
