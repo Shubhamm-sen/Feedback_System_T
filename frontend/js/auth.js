@@ -5,7 +5,7 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
     const password = document.getElementById('password').value;
 
     try {
-        const response = await fetch('https://feedbacksystemt-production.up.railway.app/login', {
+        const response = await fetch('https://feedback-system-t-1.onrender.com', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
