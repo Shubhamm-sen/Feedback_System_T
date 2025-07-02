@@ -1,7 +1,7 @@
 from flask import session, redirect, url_for, flash
 from functools import wraps
 import bcrypt
-from backend.supabase_client import supabase  # Make sure this file exists and has Supabase client
+from supabase_client import supabase# Make sure this file exists and has Supabase client
 
 # --- Role-based access decorator ---
 def role_required(required_role):
