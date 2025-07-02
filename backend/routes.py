@@ -89,3 +89,19 @@ def logout():
 @bp.context_processor
 def inject_user():
     return {'current_user': get_current_user()}
+
+#  Dummy role-based dashboards
+@bp.route('/admin')
+@role_required('admin')
+def admin_dashboard():
+    return render_template('admin_dashboard.html')
+
+@bp.route('/manager')
+@role_required('manager')
+def manager_dashboard():
+    return render_template('manager_dashboard.html')
+
+@bp.route('/employee')
+@role_required('employee')
+def employee_dashboard():
+    return render_template('employee_dashboard.html')
