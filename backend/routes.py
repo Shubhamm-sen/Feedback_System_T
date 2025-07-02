@@ -1,15 +1,9 @@
 from flask import render_template, request, redirect, url_for, flash, session, jsonify, Blueprint
 from datetime import datetime
 from auth import authenticate_user, get_current_user, role_required
-from supabase import create_client
-import os
+from supabase_client import supabase  # ✅ Use centralized client
 
 bp = Blueprint('main', __name__)
-
-# ✅ Load Supabase client securely
-supabase_url = os.getenv("SUPABASE_URL")
-supabase_key = os.getenv("SUPABASE_KEY")
-supabase = create_client(supabase_url, supabase_key)
 
 # ✅ Homepage: redirect based on session role
 @bp.route('/')
@@ -35,7 +29,6 @@ def index():
 @bp.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        # Support both form and JSON payloads
         data = request.get_json() if request.is_json else request.form
         email = data.get('email')
         password = data.get('password')
